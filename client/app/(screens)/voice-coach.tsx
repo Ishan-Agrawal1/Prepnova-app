@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,12 +26,18 @@ export default function VoiceCoachScreen() {
   const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Whether native voice is available
+  const voiceAvailable = !!Voice && Platform.OS !== 'web';
+
   const speakQuestion = () => {
     Speech.speak(questions[current], { language: 'en-US', rate: 1 });
   };
 
   const startListening = async () => {
-    if (!Voice) { Alert.alert('Not Available', 'Voice recognition requires a dev build. Use text input.'); return; }
+    if (!voiceAvailable) {
+      Alert.alert('Not Available', 'Voice recognition is not available in this environment. Please type your answer below.');
+      return;
+    }
     try {
       setListening(true); setTranscript('');
       Voice.onSpeechResults = (e: any) => { setTranscript(e.value?.[0] || ''); };
@@ -42,7 +48,7 @@ export default function VoiceCoachScreen() {
   };
 
   const saveAnswer = () => {
-    if (!transcript.trim()) { Alert.alert('Error', 'Speak your answer first'); return; }
+    if (!transcript.trim()) { Alert.alert('Error', 'Please enter or speak your answer first'); return; }
     const updated = [...answers]; updated[current] = transcript.trim(); setAnswers(updated);
     Alert.alert('Saved', 'Answer saved');
   };
@@ -61,12 +67,12 @@ export default function VoiceCoachScreen() {
   };
 
   const handleSubmit = async () => {
-    const valid = answers.filter(a => a.trim()); if (valid.length === 0) { Alert.alert('Error', 'Record at least one answer'); return; }
+    const valid = answers.filter(a => a.trim()); if (valid.length === 0) { Alert.alert('Error', 'Answer at least one question'); return; }
     const fb = generateFb();
     try { setSaving(true);
-      await saveInterview({ userEmail: user?.email || 'guest@example.com', questions, answers, feedback: fb.text, score: fb.score, mode: 'voice' });
+      await saveInterview({ userEmail: user?.email || 'guest@example.com', questions, answers, feedback: fb.text, score: fb.score, mode: voiceAvailable ? 'voice' : 'text' });
       setFeedback(`Score: ${fb.score}/100. ${fb.text}`); setSubmitted(true);
-    } catch (err: any) { Alert.alert('Error', err.response?.data?.error || 'Failed to save'); }
+    } catch (err: any) { Alert.alert('Error', err.message || 'Failed to save'); }
     finally { setSaving(false); }
   };
 
@@ -81,13 +87,29 @@ export default function VoiceCoachScreen() {
 
         <View style={s.controls}>
           <TouchableOpacity style={s.ctrlBtn} onPress={speakQuestion}><Text style={s.ctrlText}>🔊 Hear</Text></TouchableOpacity>
-          <TouchableOpacity style={s.ctrlBtn} onPress={startListening}><Text style={s.ctrlText}>{listening ? '🎤 Listening...' : '🎤 Speak'}</Text></TouchableOpacity>
+          {voiceAvailable && (
+            <TouchableOpacity style={s.ctrlBtn} onPress={startListening}>
+              <Text style={s.ctrlText}>{listening ? '🎤 Listening...' : '🎤 Speak'}</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={s.ctrlBtnOutline} onPress={saveAnswer}><Text style={s.ctrlTextOutline}>Save</Text></TouchableOpacity>
         </View>
 
+        {/* Text input fallback — always visible for typing answers */}
         <View style={s.transcriptBox}>
-          <Text style={s.transcriptLabel}>Live Transcript</Text>
-          <Text style={s.transcriptText}>{transcript || 'Your spoken answer will appear here...'}</Text>
+          <Text style={s.transcriptLabel}>
+            {voiceAvailable ? 'Live Transcript / Edit' : 'Type Your Answer'}
+          </Text>
+          <TextInput
+            style={s.transcriptInput}
+            multiline
+            numberOfLines={4}
+            placeholder={voiceAvailable ? 'Your spoken answer will appear here (or type)...' : 'Type your answer here...'}
+            placeholderTextColor={Colors.textMuted}
+            value={transcript}
+            onChangeText={setTranscript}
+            textAlignVertical="top"
+          />
         </View>
 
         <View style={s.navRow}>
@@ -134,7 +156,7 @@ const s = StyleSheet.create({
   ctrlTextOutline: { color: Colors.primaryLight, fontWeight: '700', fontSize: 14 },
   transcriptBox: { backgroundColor: Colors.inputBg, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: Colors.borderInput, minHeight: 100 },
   transcriptLabel: { fontSize: 14, fontWeight: '700', color: Colors.primaryDark, marginBottom: 8 },
-  transcriptText: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22 },
+  transcriptInput: { fontSize: 14, color: Colors.text, lineHeight: 22, minHeight: 80 },
   navRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
   navBtn: { borderWidth: 1, borderColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 },
   navOff: { opacity: 0.4 },

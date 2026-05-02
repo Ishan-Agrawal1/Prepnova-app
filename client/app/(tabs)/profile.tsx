@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, session, logout } = useAuth();
 
   const handleLogout = async () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [

@@ -2,7 +2,7 @@
  * Global error handling middleware.
  * Catches all unhandled errors from controllers and sends a consistent JSON response.
  */
-module.exports = function errorHandler(err, req, res, _next) {
+export default function errorHandler(err, req, res, _next) {
   console.error("Unhandled error:", err.stack || err.message || err);
 
   // Mongoose validation error
@@ -22,7 +22,7 @@ module.exports = function errorHandler(err, req, res, _next) {
     });
   }
 
-  // JWT errors
+  // JWT errors (kept for backward compatibility)
   if (err.name === "JsonWebTokenError") {
     return res.status(401).json({
       success: false,
@@ -51,4 +51,4 @@ module.exports = function errorHandler(err, req, res, _next) {
     success: false,
     message: err.message || "An unexpected error occurred. Please try again.",
   });
-};
+}

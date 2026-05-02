@@ -1,10 +1,10 @@
-const express = require("express");
-const aptitudeController = require("../controllers/aptitudeController");
-const authMiddleware = require("../middleware/authmiddleware");
+import express from "express";
+import * as aptitudeController from "../controllers/aptitudeController.js";
+import authMiddleware from "../middleware/authmiddleware.js";
 
 const router = express.Router();
 
 router.post("/", authMiddleware, aptitudeController.createAptitudeResult);
 router.get("/:email", aptitudeController.getAptitudeHistory);
 
-module.exports = router;
+export default router;

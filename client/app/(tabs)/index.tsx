@@ -11,7 +11,7 @@ import FeatureCard from '../../components/FeatureCard';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { token, user, appStarted, startApp } = useAuth();
+  const { session, user, appStarted, startApp } = useAuth();
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -35,7 +35,7 @@ export default function HomeScreen() {
   };
 
   const handleStart = async () => {
-    if (!token) {
+    if (!session) {
       router.push('/(auth)/login');
       return;
     }

@@ -1,29 +1,53 @@
-require("dotenv").config();
+import "dotenv/config";
 
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
 
-const connectDB = require("./config/db");
-const errorHandler = require("./middleware/errorHandler");
+import connectDB from "./config/db.js";
+import { auth } from "./lib/auth.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 // Route imports
-const authRoutes = require("./routes/authRoutes");
-const interviewRoutes = require("./routes/interviewRoutes");
-const aptitudeRoutes = require("./routes/aptitudeRoutes");
-const codingRoutes = require("./routes/codingRoutes");
-const recordsRoutes = require("./routes/recordsRoutes");
-const resumeRoutes = require("./routes/resumeRoutes");
+import interviewRoutes from "./routes/interviewRoutes.js";
+import aptitudeRoutes from "./routes/aptitudeRoutes.js";
+import codingRoutes from "./routes/codingRoutes.js";
+import recordsRoutes from "./routes/recordsRoutes.js";
+import resumeRoutes from "./routes/resumeRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// ─── CORS — must allow credentials for Better Auth cookies ───
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:8081",
+  "http://localhost:19006",
+  "http://192.168.1.5:8081",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Be permissive in dev
+      }
+    },
+    credentials: true,
+  })
+);
+
+// ─── Better Auth handler — must be BEFORE express.json() ───
+app.all("/api/auth/{*any}", toNodeHandler(auth));
+
+// ─── Body parsing (after Better Auth) ───
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use("/api/auth", authRoutes);
+// ─── App Routes ───
 app.use("/api/interviews", interviewRoutes);
 app.use("/api/aptitude", aptitudeRoutes);
 app.use("/api/coding", codingRoutes);

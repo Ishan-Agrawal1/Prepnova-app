@@ -31,7 +31,7 @@ export default function ResumeScreen() {
       const data = await uploadResume(file.uri, file.name, file.mimeType || 'application/pdf', user?.email || 'guest@example.com');
       setResult(data);
     } catch (err: any) {
-      Alert.alert('Upload Failed', err.response?.data?.error || err.message || 'Resume upload failed');
+      Alert.alert('Upload Failed', err.message || 'Resume upload failed');
     } finally { setLoading(false); }
   };
 

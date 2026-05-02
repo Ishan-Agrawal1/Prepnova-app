@@ -1,21 +1,30 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { API_URL } from '../constants/Config';
+import { Platform } from 'react-native';
+import { authClient } from '../lib/auth-client';
 
 interface User {
+  id: string;
   name: string;
   email: string;
   role: string;
+  image?: string | null;
+}
+
+interface Session {
+  id: string;
+  userId: string;
+  expiresAt: Date;
 }
 
 interface AuthContextType {
-  token: string | null;
   user: User | null;
-  appStarted: boolean;
+  session: Session | null;
   loading: boolean;
+  appStarted: boolean;
   login: (email: string, password: string) => Promise<string>;
   signup: (name: string, email: string, password: string, role: string) => Promise<string>;
+  googleLogin: () => Promise<void>;
   logout: () => Promise<void>;
   startApp: () => Promise<boolean>;
 }
@@ -23,62 +32,129 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [appStarted, setAppStarted] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [appStarted, setAppStarted] = useState(false);
 
+  // Fetch session on mount
   useEffect(() => {
-    loadStoredAuth();
+    loadSession();
   }, []);
 
-  const loadStoredAuth = async () => {
+  const loadSession = async () => {
     try {
-      const [storedToken, storedUser, storedStarted] = await Promise.all([
-        AsyncStorage.getItem('token'),
-        AsyncStorage.getItem('studentUser'),
-        AsyncStorage.getItem('appStarted'),
-      ]);
-
-      if (storedToken) setToken(storedToken);
-      if (storedUser) setUser(JSON.parse(storedUser));
+      // Check appStarted flag
+      const storedStarted = await AsyncStorage.getItem('appStarted');
       if (storedStarted === 'true') setAppStarted(true);
+
+      // Fetch session from Better Auth (cookie-based)
+      const sessionData: any = await authClient.getSession();
+
+      if (sessionData?.data?.session && sessionData?.data?.user) {
+        const u = sessionData.data.user;
+        setUser({
+          id: u.id,
+          name: u.name || '',
+          email: u.email || '',
+          role: u.role || 'Student',
+          image: u.image,
+        });
+        setSession({
+          id: sessionData.data.session.id,
+          userId: sessionData.data.session.userId,
+          expiresAt: new Date(sessionData.data.session.expiresAt),
+        });
+      }
     } catch (error) {
-      console.error('Failed to load auth state:', error);
+      console.error('Failed to load session:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string): Promise<string> => {
-    const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+    const result: any = await authClient.signIn.email({
+      email,
+      password,
+    });
 
-    const newToken = res.data.token;
-    const newUser = res.data.user;
+    if (result.error) {
+      throw new Error(result.error.message || 'Login failed');
+    }
 
-    await AsyncStorage.setItem('token', newToken);
-    await AsyncStorage.setItem('studentUser', JSON.stringify(newUser));
+    if (result.data?.session && result.data?.user) {
+      const u = result.data.user;
+      setUser({
+        id: u.id,
+        name: u.name || '',
+        email: u.email || '',
+        role: u.role || 'Student',
+        image: u.image,
+      });
+      setSession({
+        id: result.data.session.id,
+        userId: result.data.session.userId,
+        expiresAt: new Date(result.data.session.expiresAt),
+      });
+    }
 
-    setToken(newToken);
-    setUser(newUser);
-
-    return res.data.message || 'Login successful';
+    return 'Login successful';
   };
 
   const signup = async (name: string, email: string, password: string, role: string): Promise<string> => {
-    const res = await axios.post(`${API_URL}/api/auth/signup`, { name, email, password, role });
-    return res.data.message || 'Signup successful';
+    const result: any = await authClient.signUp.email({
+      name,
+      email,
+      password,
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message || 'Signup failed');
+    }
+
+    return 'Account created successfully! Please login.';
+  };
+
+  const googleLogin = async (): Promise<void> => {
+    // On web, use the current page origin so Better Auth redirects back to the client app.
+    // On native, use the custom scheme registered with the expo plugin.
+    let callbackURL = "/";
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      callbackURL = window.location.origin + "/";
+    } else {
+      callbackURL = "prepnova://";
+    }
+
+    const result: any = await authClient.signIn.social({
+      provider: "google",
+      callbackURL,
+    });
+
+    if (result.error) {
+      console.error("Google login error:", result.error);
+      throw new Error(result.error.message || 'Google login failed');
+    }
+
+    // After OAuth redirect completes, reload session
+    await loadSession();
   };
 
   const logout = async () => {
-    await AsyncStorage.multiRemove(['token', 'studentUser', 'appStarted']);
-    setToken(null);
+    try {
+      await authClient.signOut();
+    } catch (error) {
+      console.error('Signout API error:', error);
+    }
+
+    await AsyncStorage.multiRemove(['appStarted']);
     setUser(null);
+    setSession(null);
     setAppStarted(false);
   };
 
   const startApp = async (): Promise<boolean> => {
-    if (!token) return false;
+    if (!session) return false;
     await AsyncStorage.setItem('appStarted', 'true');
     setAppStarted(true);
     return true;
@@ -86,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ token, user, appStarted, loading, login, signup, logout, startApp }}
+      value={{ user, session, loading, appStarted, login, signup, googleLogin, logout, startApp }}
     >
       {children}
     </AuthContext.Provider>

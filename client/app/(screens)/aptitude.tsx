@@ -23,7 +23,7 @@ export default function AptitudeScreen() {
       await saveAptitude({ userEmail: user?.email || 'guest@example.com', score: total, total: questions.length });
       setScore(total);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to save');
+      Alert.alert('Error', err.message || 'Failed to save');
     } finally { setSaving(false); }
   };
 

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const codingResultSchema = new mongoose.Schema(
   {
@@ -24,4 +24,4 @@ const codingResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("CodingResult", codingResultSchema);
+export default mongoose.model("CodingResult", codingResultSchema);

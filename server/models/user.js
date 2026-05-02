@@ -1,4 +1,9 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
+// NOTE: This model is kept for reference / backward compatibility.
+// Better Auth manages its own 'user' collection with its schema.
+// Existing Mongoose queries referencing this model should be
+// migrated to use Better Auth's user management.
 
 const userSchema = new mongoose.Schema(
   {
@@ -26,4 +31,4 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("User", userSchema);
+export default mongoose.model("User", userSchema);

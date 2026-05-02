@@ -20,7 +20,7 @@ export default function CodingScreen() {
       await saveCoding({ userEmail: user?.email || 'guest@example.com', question, code, feedback });
       setResult(feedback);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to save');
+      Alert.alert('Error', err.message || 'Failed to save');
     } finally { setSaving(false); }
   };
 

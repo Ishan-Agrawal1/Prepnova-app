@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
 import * as Speech from 'expo-speech';
 import { Ionicons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
+import { useAuth } from '../../contexts/AuthContext';
+import { saveInterview } from '../../services/api';
 
 const questions = [
   'Tell me about your background and experience.',
@@ -13,9 +15,14 @@ const questions = [
 ];
 
 export default function VRInterviewScreen() {
+  const { user } = useAuth();
   const [started, setStarted] = useState(false);
   const [current, setCurrent] = useState(0);
   const [speaking, setSpeaking] = useState(false);
+  const [answers, setAnswers] = useState(Array(questions.length).fill(''));
+  const [submitted, setSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState<{ score: number; tips: string } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const speak = () => {
     setSpeaking(true);
@@ -40,6 +47,78 @@ export default function VRInterviewScreen() {
     }
   };
 
+  const prev = () => {
+    if (current > 0) setCurrent(current - 1);
+  };
+
+  const handleAnswerChange = (text: string) => {
+    const updated = [...answers];
+    updated[current] = text;
+    setAnswers(updated);
+  };
+
+  const generateAnalysis = () => {
+    const combined = answers.join(' ').toLowerCase();
+    const answered = answers.filter(a => a.trim().length > 0).length;
+    let score = 60;
+    const tips: string[] = [];
+
+    // Score based on how many questions answered
+    score += (answered / questions.length) * 15;
+
+    // Depth of answers
+    const avgLength = combined.length / Math.max(answered, 1);
+    if (avgLength > 80) { score += 10; } else { tips.push('Give more detailed, longer responses to show depth.'); }
+
+    // Keywords check
+    if (combined.includes('project') || combined.includes('built') || combined.includes('developed')) {
+      score += 5;
+    } else { tips.push('Mention specific projects or things you built.'); }
+
+    if (combined.includes('team') || combined.includes('collaborated') || combined.includes('together')) {
+      score += 5;
+    } else { tips.push('Highlight teamwork and collaboration experiences.'); }
+
+    if (combined.includes('result') || combined.includes('impact') || combined.includes('achieved') || combined.includes('improved')) {
+      score += 5;
+    } else { tips.push('Quantify your achievements — mention results and impact.'); }
+
+    if (combined.includes('learn') || combined.includes('growth') || combined.includes('improve')) {
+      score += 3;
+    } else { tips.push('Show a growth mindset — mention what you learned.'); }
+
+    if (tips.length === 0) tips.push('Excellent responses! Keep practicing for even more confidence.');
+
+    return { score: Math.min(100, Math.round(score)), tips: tips.join(' ') };
+  };
+
+  const handleSubmit = async () => {
+    const valid = answers.filter(a => a.trim());
+    if (valid.length === 0) {
+      Alert.alert('Error', 'Please answer at least one question before submitting.');
+      return;
+    }
+
+    const analysis = generateAnalysis();
+    try {
+      setSaving(true);
+      await saveInterview({
+        userEmail: user?.email || 'guest@example.com',
+        questions,
+        answers,
+        feedback: `Score: ${analysis.score}/100. ${analysis.tips}`,
+        score: analysis.score,
+        mode: 'text',
+      });
+      setFeedback(analysis);
+      setSubmitted(true);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!started) {
     return (
       <View style={s.introContainer}>
@@ -49,11 +128,11 @@ export default function VRInterviewScreen() {
           </View>
           <Text style={s.introTitle}>VR Interview Experience</Text>
           <Text style={s.introSubtitle}>
-            Experience an immersive interview with an AI interviewer. Listen to questions and practice your responses.
+            Experience an immersive interview with an AI interviewer. Listen to questions, type your responses, and receive a detailed analysis.
           </Text>
 
           <View style={s.featureList}>
-            {['AI interviewer reads questions aloud', 'Practice speaking naturally', 'Navigate through interview rounds', 'Build confidence for real interviews'].map((f, i) => (
+            {['AI interviewer reads questions aloud', 'Type your responses naturally', 'Get scored & analyzed after submission', 'Build confidence for real interviews'].map((f, i) => (
               <View key={i} style={s.featureRow}>
                 <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
                 <Text style={s.featureText}>{f}</Text>
@@ -107,14 +186,63 @@ export default function VRInterviewScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={[s.nextBtn, current === questions.length - 1 && { opacity: 0.4 }]}
-          onPress={next}
-          disabled={current === questions.length - 1}
-        >
-          <Text style={s.nextText}>Next Question →</Text>
-        </TouchableOpacity>
+        {/* Answer Input */}
+        <View style={s.answerBox}>
+          <Text style={s.answerLabel}>Your Response</Text>
+          <TextInput
+            style={s.answerInput}
+            multiline
+            numberOfLines={5}
+            placeholder="Type your answer here..."
+            placeholderTextColor={Colors.textMuted}
+            value={answers[current]}
+            onChangeText={handleAnswerChange}
+            textAlignVertical="top"
+          />
+        </View>
+
+        {/* Progress dots */}
+        <View style={s.progressRow}>
+          {questions.map((_, i) => (
+            <View key={i} style={[s.progressDot, answers[i]?.trim() ? s.progressDotFilled : null, current === i && s.progressDotCurrent]} />
+          ))}
+        </View>
+
+        <View style={s.navRow}>
+          <TouchableOpacity style={[s.navBtn, current === 0 && { opacity: 0.4 }]} onPress={prev} disabled={current === 0}>
+            <Text style={s.navText}>← Previous</Text>
+          </TouchableOpacity>
+          {current < questions.length - 1 ? (
+            <TouchableOpacity style={s.navBtn} onPress={next}>
+              <Text style={s.navText}>Next →</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[s.submitBtn, saving && { opacity: 0.6 }]}
+              onPress={handleSubmit}
+              disabled={saving}
+            >
+              <Text style={s.submitText}>{saving ? 'Analyzing...' : '✅ Submit & Analyze'}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
+
+      {/* Analysis Result */}
+      {submitted && feedback && (
+        <View style={s.analysisCard}>
+          <Text style={s.analysisTitle}>📊 Interview Analysis</Text>
+          <View style={s.scoreCircle}>
+            <Text style={s.scoreValue}>{feedback.score}</Text>
+            <Text style={s.scoreLabel}>/100</Text>
+          </View>
+          <Text style={s.analysisGrade}>
+            {feedback.score >= 85 ? '🌟 Excellent' : feedback.score >= 70 ? '👍 Good' : feedback.score >= 55 ? '📈 Fair' : '💪 Keep Practicing'}
+          </Text>
+          <View style={s.analysisDivider} />
+          <Text style={s.analysisFeedback}>{feedback.tips}</Text>
+        </View>
+      )}
 
       {/* Tips */}
       <View style={s.tipsCard}>
@@ -187,10 +315,36 @@ const s = StyleSheet.create({
     backgroundColor: Colors.primaryLight, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12,
   },
   ctrlText: { color: Colors.white, fontWeight: '700', fontSize: 14 },
-  nextBtn: {
-    backgroundColor: Colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center',
+
+  answerBox: { backgroundColor: Colors.inputBg, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: Colors.borderInput, marginBottom: 16 },
+  answerLabel: { fontSize: 14, fontWeight: '700', color: Colors.primaryDark, marginBottom: 8 },
+  answerInput: { fontSize: 14, color: Colors.text, lineHeight: 22, minHeight: 100 },
+
+  progressRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 16 },
+  progressDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.borderInput },
+  progressDotFilled: { backgroundColor: Colors.success },
+  progressDotCurrent: { borderWidth: 2, borderColor: Colors.primary, width: 14, height: 14, borderRadius: 7 },
+
+  navRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  navBtn: { borderWidth: 1, borderColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 },
+  navText: { color: Colors.primaryLight, fontWeight: '600', fontSize: 14 },
+  submitBtn: { backgroundColor: Colors.primaryLight, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 },
+  submitText: { color: Colors.white, fontWeight: '700', fontSize: 14 },
+
+  analysisCard: {
+    backgroundColor: Colors.surface, borderRadius: 24, padding: 28, alignItems: 'center',
+    borderWidth: 1, borderColor: Colors.borderCard, marginBottom: 16,
+    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 4,
   },
-  nextText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
+  analysisTitle: { fontSize: 20, fontWeight: '800', color: Colors.textDark, marginBottom: 18 },
+  scoreCircle: {
+    flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: 8,
+  },
+  scoreValue: { fontSize: 52, fontWeight: '800', color: Colors.primary },
+  scoreLabel: { fontSize: 20, fontWeight: '600', color: Colors.textMuted, marginLeft: 2 },
+  analysisGrade: { fontSize: 18, fontWeight: '700', color: Colors.primaryDark, marginBottom: 16 },
+  analysisDivider: { width: '80%', height: 1, backgroundColor: Colors.borderCard, marginBottom: 16 },
+  analysisFeedback: { fontSize: 14, color: Colors.textSecondary, lineHeight: 24, textAlign: 'center' },
 
   tipsCard: {
     backgroundColor: Colors.surface, borderRadius: 20, padding: 22,

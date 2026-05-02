@@ -1,6 +1,6 @@
-const CodingResult = require("../models/CodingResult");
+import CodingResult from "../models/CodingResult.js";
 
-exports.createCodingResult = async (req, res, next) => {
+export const createCodingResult = async (req, res, next) => {
   try {
     const { userEmail, question, code, feedback } = req.body;
 
@@ -28,7 +28,7 @@ exports.createCodingResult = async (req, res, next) => {
   }
 };
 
-exports.getCodingHistory = async (req, res, next) => {
+export const getCodingHistory = async (req, res, next) => {
   try {
     if (!req.params.email) {
       return res.status(400).json({

@@ -1,6 +1,6 @@
-const AptitudeResult = require("../models/AptitudeResult");
+import AptitudeResult from "../models/AptitudeResult.js";
 
-exports.createAptitudeResult = async (req, res, next) => {
+export const createAptitudeResult = async (req, res, next) => {
   try {
     const { userEmail, score, total } = req.body;
 
@@ -27,7 +27,7 @@ exports.createAptitudeResult = async (req, res, next) => {
   }
 };
 
-exports.getAptitudeHistory = async (req, res, next) => {
+export const getAptitudeHistory = async (req, res, next) => {
   try {
     if (!req.params.email) {
       return res.status(400).json({

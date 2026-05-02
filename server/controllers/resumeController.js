@@ -1,8 +1,16 @@
-const multer = require("multer");
-const pdfParse = require("pdf-parse");
-const mammoth = require("mammoth");
-const OpenAI = require("openai");
-const Analysis = require("../models/analysis");
+import multer from "multer";
+// pdf-parse is loaded lazily to avoid its test-file-loading bug on import
+let pdfParse;
+const getPdfParse = async () => {
+  if (!pdfParse) {
+    const mod = await import("pdf-parse");
+    pdfParse = mod.default || mod;
+  }
+  return pdfParse;
+};
+import mammoth from "mammoth";
+import OpenAI from "openai";
+import Analysis from "../models/analysis.js";
 
 const openaiClient = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -19,7 +27,8 @@ const extractResumeText = async (file) => {
 
   if (file.mimetype === "application/pdf" || ext === "pdf") {
     try {
-      const data = await pdfParse(file.buffer);
+      const parse = await getPdfParse();
+      const data = await parse(file.buffer);
       return data.text;
     } catch (error) {
       console.error("PDF parse failed:", error.message || error);
@@ -169,9 +178,9 @@ const upload = multer();
 
 // --- Controller handlers ---
 
-exports.upload = upload;
+export { upload };
 
-exports.uploadResume = async (req, res, next) => {
+export const uploadResume = async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -286,7 +295,7 @@ exports.uploadResume = async (req, res, next) => {
   }
 };
 
-exports.getAnalyses = async (req, res, next) => {
+export const getAnalyses = async (req, res, next) => {
   try {
     const email = req.query.email;
 
@@ -314,7 +323,7 @@ exports.getAnalyses = async (req, res, next) => {
   }
 };
 
-exports.getAnalysesByEmail = async (req, res, next) => {
+export const getAnalysesByEmail = async (req, res, next) => {
   try {
     const email = req.params.email;
 

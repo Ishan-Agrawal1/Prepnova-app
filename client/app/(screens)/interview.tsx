@@ -36,7 +36,7 @@ export default function InterviewScreen() {
       setFeedback(fb);
       setSubmitted(true);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to save interview result');
+      Alert.alert('Error', err.message || 'Failed to save interview result');
     } finally { setSaving(false); }
   };
 

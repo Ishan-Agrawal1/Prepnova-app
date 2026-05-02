@@ -1,6 +1,6 @@
-const Interview = require("../models/interview");
+import Interview from "../models/interview.js";
 
-exports.createInterview = async (req, res, next) => {
+export const createInterview = async (req, res, next) => {
   try {
     const { userEmail, questions, answers, feedback } = req.body;
 
@@ -28,7 +28,7 @@ exports.createInterview = async (req, res, next) => {
   }
 };
 
-exports.getInterviewHistory = async (req, res, next) => {
+export const getInterviewHistory = async (req, res, next) => {
   try {
     if (!req.params.email) {
       return res.status(400).json({

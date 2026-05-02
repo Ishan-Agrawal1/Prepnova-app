@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const aptitudeResultSchema = new mongoose.Schema(
   {
@@ -20,4 +20,4 @@ const aptitudeResultSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("AptitudeResult", aptitudeResultSchema);
+export default mongoose.model("AptitudeResult", aptitudeResultSchema);

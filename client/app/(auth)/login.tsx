@@ -10,7 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,20 @@ export default function LoginScreen() {
       Alert.alert('Success', message);
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong');
+      Alert.alert('Login Failed', error.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      await googleLogin();
+      // After OAuth redirect completes, session is loaded automatically
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert('Google Login Failed', error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -87,6 +100,23 @@ export default function LoginScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.btnText}>{loading ? 'Logging in...' : 'Login'}</Text>
+          </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.btn, styles.googleBtn, loading && styles.btnDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="logo-google" size={20} color={Colors.textDark} style={styles.googleIcon} />
+            <Text style={styles.googleBtnText}>Continue with Google</Text>
           </TouchableOpacity>
 
           <View style={styles.linkRow}>
@@ -192,6 +222,39 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: '700',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.borderInput,
+  },
+  dividerText: {
+    marginHorizontal: 14,
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textMuted,
+  },
+  googleBtn: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: Colors.borderCard,
+    marginTop: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  googleIcon: {
+    marginRight: 10,
+  },
+  googleBtnText: {
+    color: Colors.textDark,
+    fontWeight: '700',
+    fontSize: 16,
   },
   linkRow: {
     flexDirection: 'row',

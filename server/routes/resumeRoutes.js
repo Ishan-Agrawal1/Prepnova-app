@@ -1,5 +1,5 @@
-const express = require("express");
-const resumeController = require("../controllers/resumeController");
+import express from "express";
+import * as resumeController from "../controllers/resumeController.js";
 
 const router = express.Router();
 
@@ -12,4 +12,4 @@ router.get("/analyses", resumeController.getAnalyses);
 // Get analyses by path email
 router.get("/analyses/:email", resumeController.getAnalysesByEmail);
 
-module.exports = router;
+export default router;
