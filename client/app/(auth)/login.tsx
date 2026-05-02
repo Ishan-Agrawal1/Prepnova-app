@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
@@ -44,10 +44,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="school" size={40} color={Colors.white} />
-          </View>
-          <Text style={styles.brand}>Virtual Industry</Text>
+          <Image source={require('../../assets/images/image.png')} style={styles.heroImage} resizeMode="contain" />
           <Text style={styles.subtitle}>Login to access your student dashboard</Text>
         </View>
 
@@ -120,19 +117,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+  heroImage: {
+    width: 180,
+    height: 140,
+    marginBottom: 10,
   },
   brand: {
     fontSize: 28,

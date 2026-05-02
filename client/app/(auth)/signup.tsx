@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
@@ -45,10 +45,7 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="person-add" size={36} color={Colors.white} />
-          </View>
-          <Text style={styles.brand}>Virtual Industry</Text>
+          <Image source={require('../../assets/images/image.png')} style={styles.heroImage} resizeMode="contain" />
           <Text style={styles.subtitle}>Create your profile and start preparing</Text>
         </View>
 
@@ -130,13 +127,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   header: { alignItems: 'center', marginBottom: 28 },
-  iconCircle: {
-    width: 76, height: 76, borderRadius: 38,
-    backgroundColor: Colors.primary,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 14,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
+  heroImage: {
+    width: 170,
+    height: 132,
+    marginBottom: 10,
   },
   brand: { fontSize: 26, fontWeight: '800', color: Colors.primary, marginBottom: 4 },
   subtitle: { fontSize: 14, color: Colors.textSecondary },

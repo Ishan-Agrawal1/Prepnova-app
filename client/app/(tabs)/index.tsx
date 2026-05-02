@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +50,9 @@ export default function HomeScreen() {
     >
       {/* Hero Section */}
       <View style={styles.heroCard}>
+        <View style={styles.logoWrap}>
+          <Image source={require('../../assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
+        </View>
         <View style={styles.heroBadge}>
           <Ionicons name="sparkles" size={16} color={Colors.primary} />
           <Text style={styles.heroBadgeText}>AI-Powered Platform</Text>
@@ -176,6 +179,14 @@ const styles = StyleSheet.create({
     shadowColor: Colors.primary, shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08, shadowRadius: 24, elevation: 6,
     marginBottom: 20,
+  },
+  logoWrap: {
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  logo: {
+    width: 92,
+    height: 92,
   },
   heroBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
