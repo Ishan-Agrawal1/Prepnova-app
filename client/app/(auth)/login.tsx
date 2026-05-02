@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ScrollView, Alert,
@@ -10,11 +10,20 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, user, session } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // If user is already authenticated (e.g. after Google OAuth redirect),
+  // redirect them away from the login page to the home screen.
+  useEffect(() => {
+    if (user && session) {
+      console.log('[Auth] User already authenticated on login page, redirecting to home...');
+      router.replace('/(tabs)');
+    }
+  }, [user, session]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -109,7 +118,7 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.btn, styles.googleBtn, loading && styles.btnDisabled]}
             onPress={handleGoogleLogin}
             disabled={loading}
@@ -117,7 +126,7 @@ export default function LoginScreen() {
           >
             <Ionicons name="logo-google" size={20} color={Colors.textDark} style={styles.googleIcon} />
             <Text style={styles.googleBtnText}>Continue with Google</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <View style={styles.linkRow}>
             <Text style={styles.linkText}>Don't have an account? </Text>

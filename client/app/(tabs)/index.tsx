@@ -35,11 +35,18 @@ export default function HomeScreen() {
   };
 
   const handleStart = async () => {
-    if (!session) {
-      router.push('/(auth)/login');
-      return;
+    // startApp() will re-verify the session from the server if needed
+    const ok = await startApp();
+    if (!ok) {
+      // If session check failed, the user might have just completed Google OAuth
+      // and the cookie hasn't propagated yet. Try once more after a short delay.
+      console.log('[Auth] First startApp attempt failed, retrying...');
+      await new Promise(r => setTimeout(r, 500));
+      const retry = await startApp();
+      if (!retry) {
+        router.push('/(auth)/login');
+      }
     }
-    await startApp();
   };
 
   return (

@@ -4,7 +4,7 @@
     "slug": "prepnova",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/logo-square.png",
     "scheme": "prepnova",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,12 +12,17 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.ishan.prepnova",
       "adaptiveIcon": {
         "backgroundColor": "#1e65b7",
-        "foregroundImage": "./assets/images/logo.png"
+        "foregroundImage": "./assets/images/logo-square.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -55,6 +60,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e5cc62d8-590a-4222-b492-d530b72d4621"
+      }
+    },
+    "owner": "agr.ishan",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e5cc62d8-590a-4222-b492-d530b72d4621"
     }
   }
 }

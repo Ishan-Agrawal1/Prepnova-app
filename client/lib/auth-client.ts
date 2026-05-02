@@ -19,4 +19,7 @@ if (Platform.OS !== 'web') {
 export const authClient = createAuthClient({
   baseURL: API_URL,
   plugins,
+  fetchOptions: {
+    credentials: 'include' as RequestCredentials,
+  },
 });

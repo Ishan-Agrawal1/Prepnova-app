@@ -40,6 +40,24 @@ app.use(
   })
 );
 
+// ─── Explicit CORS for Better Auth routes ───
+// toNodeHandler bypasses Express's response pipeline, so the global
+// CORS middleware above may not attach headers. This ensures
+// Access-Control-Allow-Credentials is sent on auth API responses.
+app.use("/api/auth", (req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Better-Auth-Cookie");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // ─── Better Auth handler — must be BEFORE express.json() ───
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
