@@ -5,8 +5,8 @@ import Colors from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { saveInterview } from '../../services/api';
 
-let Voice: any = null;
-try { Voice = require('@react-native-voice/voice').default; } catch {}
+// @react-native-voice/voice removed (AndroidX conflict) — text input fallback is used instead
+const Voice: any = null;
 
 const questions = [
   'Tell me about yourself.',

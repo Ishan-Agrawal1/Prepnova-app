@@ -88,6 +88,7 @@ export const auth = betterAuth({
     "http://192.168.1.5:8081",
     "http://192.168.1.5:3001",
     "exp://192.168.1.5:8081",
+    "https://prepnova-app.onrender.com",
     "prepnova://",
   ],
 
@@ -95,14 +96,11 @@ export const auth = betterAuth({
     expo(),
   ],
 
-  // Cookie options for development — ensure cookies work cross-port (same host)
-  // sameSite: "lax" works because Config.ts ensures page host == API host
-  // secure: false allows cookies over HTTP in development
   advanced: {
     disableCSRFCheck: true,
     cookieOptions: {
-      sameSite: "lax",
-      secure: false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
     },
   },
 });
