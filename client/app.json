@@ -67,12 +67,9 @@
         "projectId": "e5cc62d8-590a-4222-b492-d530b72d4621"
       }
     },
-    "owner": "agr.ishan",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "updates": {
-      "url": "https://u.expo.dev/e5cc62d8-590a-4222-b492-d530b72d4621"
-    }
+      "enabled": false
+    },
+    "owner": "agr.ishan"
   }
 }
